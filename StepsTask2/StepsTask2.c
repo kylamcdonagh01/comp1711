@@ -3,12 +3,6 @@
 #include <string.h>
 #include "FitnessDataStruct.h"
 
-// Define an appropriate struct
-typedef struct {
-	char date[11];
-	char time[6];
-	int steps;
-} FITNESS_DATA;
 
 // Struct moved to header file
 
@@ -55,7 +49,11 @@ int menu() {
     char line_buffer[buffer_size];
     int count = 0;
     char choice;
-    int smallest;
+    int smallest; //stores index of smallest steps value 
+    int highest; // stores index of highest steps value
+    int totalsteps = 0; //stores the total number of steps used to calc mean
+    int numrecords = 0; //stores the number of records in the file to calc mean
+    int mean; //stores calculated mean
     FITNESS_DATA fdata; //creating array of FITNESS_DATA
 
     FITNESS_DATA records[100];
@@ -92,7 +90,7 @@ int menu() {
         case 'b':
             count = 0;
             while (fgets(line_buffer, buffer_size, file) != NULL) { //iterate through file one line at a time
-                if (count < 100) {
+                if (count < 500) {
                     count = count + 1;
                 }
             }
@@ -102,7 +100,7 @@ int menu() {
         case 'C':
         case 'c':
             while (fgets(line_buffer, buffer_size, file) != NULL) { //iterate through file one line at a time
-                if (count < 100) {
+                if (count < 500) {
                     char date[11], time[6], steps[20]; //temporary variables
                     tokeniseRecord(line_buffer, ",", date, time, steps);
                     fdata.steps = atoi(steps);
@@ -111,20 +109,72 @@ int menu() {
                     records[count] = fdata;
                     count = count + 1;
 
-                    for (int i = 1; i < count && i < 100; i++) {
-                      if (records[i].steps < records[i-1].steps) {
+                    smallest = 0;
+                    for (int i = 1; i < count && i < 500; i++) {
+                      if (records[i].steps < records[smallest].steps) {
                         smallest = i;
                       }
                     }
-              printf("The fewest steps were completed on Date: %s at Time slot:/%s", records[smallest].date, records[smallest].time);
+                }
+            }
+            printf("The fewest steps were completed on Date: %s at Time slot: %s\n", records[smallest].date, records[smallest].time);
+            break;
+
+        case 'D':
+        case 'd':
+            while (fgets(line_buffer, buffer_size, file) != NULL) { //iterate through file one line at a time
+                if (count < 500) {
+                    char date[11], time[6], steps[20]; //temporary variables
+                    tokeniseRecord(line_buffer, ",", date, time, steps);
+                    fdata.steps = atoi(steps);
+                    strcpy(fdata.date, date);
+                    strcpy(fdata.time,time);
+                    records[count] = fdata;
+                    count = count + 1;
+
+                    highest = 0;
+                    for (int i = 1; i < count && i < 500; i++) {
+                      if (records[i].steps > records[highest].steps) {
+                        highest = i;
+                      }
+                    }
+                }
+            }
+            printf("The highest number of steps was completed on Date: %s at Time slot: %s\n", records[highest].date, records[highest].time);
+            break;
+
+
+        case 'E':
+        case 'e':
+            while (fgets(line_buffer, buffer_size, file) != NULL) { //iterate through file one line at a time
+                if (count < 500) {
+                    char date[11], time[6], steps[20]; //temporary variables
+                    tokeniseRecord(line_buffer, ",", date, time, steps);
+                    fdata.steps = atoi(steps);
+                    strcpy(fdata.date, date);
+                    strcpy(fdata.time,time);
+                    records[count] = fdata;
+                    count = count + 1;
+
+                    for (int i = 1; i < count && i < 500; i++) {
+                        totalsteps = totalsteps + records[i].steps;
+                        numrecords = numrecords + 1;
+                      }
+                    }
+                }
+            
+            mean = totalsteps / numrecords;
+            printf("The mean number of steps is: %d\n", mean );
+            break;
         }
+        
 
                 
             
     fclose(file); //always remember to close the file again!
         }
-  }
-}
+  
+
 // Complete the main function
 int main() {
     menu();
