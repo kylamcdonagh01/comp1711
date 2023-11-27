@@ -58,6 +58,7 @@ int menu() {
 
     FITNESS_DATA records[100];
 
+    //put this into a while loop (while choice != Q)
     printf("Menu Options:\n");
     printf("A: Specify the filename to be imported\n");
     printf("B: Display the total number of records in the file\n");
@@ -166,15 +167,20 @@ int menu() {
             mean = totalsteps / numrecords;
             printf("The mean number of steps is: %d\n", mean );
             break;
-        }
+
         
+        case 'F': //im stuck on this one
+        case 'f':
+            break;
 
-                
-            
+        case 'Q':
+        case 'q':
+            break;
+
     fclose(file); //always remember to close the file again!
-        }
+    }
   
-
+}
 // Complete the main function
 int main() {
     menu();
