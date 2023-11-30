@@ -54,6 +54,7 @@ int menu() {
     int totalsteps = 0; //stores the total number of steps used to calc mean
     int numrecords = 0; //stores the number of records in the file to calc mean
     int mean; //stores calculated mean
+    char userfilename;
     FITNESS_DATA fdata; //creating array of FITNESS_DATA
 
     FITNESS_DATA records[100];
@@ -84,7 +85,15 @@ int menu() {
         // this allows for either capital or lower case
         case 'A':
         case 'a':
-            printf("Filename to be imported: %s\n", filename);
+            printf("Input filename: \n");
+            scanf ("%s", userfilename); //takes a users input
+            char filename [] = userfilename; //open file
+            FILE *file = fopen(filename, "r");
+                if (file == NULL) {
+                    perror("");
+                    printf("Error: Could not find or open the file.\n");
+                    break;
+            printf("File successfully loaded.\n");
             break;
 
         case 'B':
@@ -95,7 +104,7 @@ int menu() {
                     count = count + 1;
                 }
             }
-            printf("Number of records in file: %d\n", count);
+            printf("Total records: %d\n", count);
             break;
 
         case 'C':
