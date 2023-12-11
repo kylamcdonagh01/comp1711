@@ -3,64 +3,209 @@
 #include <string.h>
 #include "FitnessDataStruct.h"
 
+// Function prototypes
+void readDataFromFile();
+void displayTotalRecords();
+void findFewestSteps();
+void findLargestSteps();
+void findMeanStepCount();
+void findLongestPeriodAbove500();
+void printMenu();
 
 // Struct moved to header file
 
 // Define any additional variables here
 // Global variables for filename and FITNESS_DATA array
-
+char filename[300];
+FITNESS_DATA *fitnessDataArray = NULL;
+int totalRecords = 0;
 
 // This is your helper function. Do not change it in any way.
 // Inputs: character array representing a row; the delimiter character
-// Ouputs: date character array; time character array; steps character array
+// Outputs: date character array; time character array; steps character array
 void tokeniseRecord(const char *input, const char *delimiter,
                     char *date, char *time, char *steps) {
     // Create a copy of the input string as strtok modifies the string
     char *inputCopy = strdup(input);
-    
+
     // Tokenize the copied string
     char *token = strtok(inputCopy, delimiter);
-    if (token != NULL) {        strcpy(date, token);
+    if (token != NULL) {
+        strcpy(date, token);
     }
-    
+
     token = strtok(NULL, delimiter);
     if (token != NULL) {
         strcpy(time, token);
     }
-    
+
     token = strtok(NULL, delimiter);
     if (token != NULL) {
         strcpy(steps, token);
     }
-    
+
     // Free the duplicated string
     free(inputCopy);
+}
 
-                    }
-int menu() {
-    char filename [] = "FitnessData_2023.csv"; //open file
+int main() {
+    char choice;
+
+    do {
+        printMenu();
+        printf("Enter choice: ");
+        scanf(" %c", &choice);
+
+        switch (choice) {
+            case 'A':
+            case 'a':
+                printf("Input filename: ");
+                scanf("%s", filename);
+                readDataFromFile();
+                break;
+            case 'B':
+            case 'b':
+                displayTotalRecords();
+                break;
+            case 'C':
+            case 'c':
+                findFewestSteps();
+                break;
+            case 'D':
+            case 'd':
+                findLargestSteps();
+                break;
+            case 'E':
+            case 'e':
+                findMeanStepCount();
+                break;
+            case 'F':
+            case 'f':
+                findLongestPeriodAbove500();
+                break;
+            case 'Q':
+            case 'q':
+                free(fitnessDataArray); // Free allocated memory
+                return 0;
+            default:
+                printf("Invalid choice. Try again.\n");
+        }
+    } while (choice != 'Q');
+
+    return 0;
+}
+
+void readDataFromFile() {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        perror("");
-        return 1;
+        printf("Error: Could not open file.\n");
+        exit(1);
     }
 
-    int buffer_size = 100; //size of buffer determines how many characters are read from file
-    char line_buffer[buffer_size];
-    int count = 0;
-    char choice;
-    int smallest; //stores index of smallest steps value 
-    int highest; // stores index of highest steps value
-    int totalsteps = 0; //stores the total number of steps used to calc mean
-    int numrecords = 0; //stores the number of records in the file to calc mean
-    int mean; //stores calculated mean
-    char userfilename;
-    FITNESS_DATA fdata; //creating array of FITNESS_DATA
+    char buffer[300];
+    int records = 0;
 
-    FITNESS_DATA records[100];
+    while (fgets(buffer, sizeof(buffer), file) != NULL) {
+        records++;
+    }
 
-    //put this into a while loop (while choice != Q)
-    printf("Menu Options:\n");
+    // Allocate memory for FITNESS_DATA array
+    fitnessDataArray = (FITNESS_DATA *)malloc(records * sizeof(FITNESS_DATA));
+
+
+    // Rewind file and read data into array
+    rewind(file);
+    for (int i = 0; i < records; i++) {
+        fgets(buffer, sizeof(buffer), file);
+        tokeniseRecord(buffer, ",", fitnessDataArray[i].date, fitnessDataArray[i].time, buffer);
+        fitnessDataArray[i].steps = atoi(buffer);
+    }
+
+    fclose(file);
+    totalRecords = records;
+    printf("File successfully loaded.\n");
+}
+
+void displayTotalRecords() {
+    printf("Total records: %d\n", totalRecords);
+}
+
+void findFewestSteps() {
+    int minSteps = fitnessDataArray[0].steps;
+    int index = 0;
+
+    for (int i = 1; i < totalRecords; i++) {
+        if (fitnessDataArray[i].steps < minSteps) {
+            minSteps = fitnessDataArray[i].steps;
+            index = i;
+        }
+    }
+
+    printf("Fewest steps: %s %s\n", fitnessDataArray[index].date, fitnessDataArray[index].time);
+}
+
+void findLargestSteps() {
+    int maxSteps = fitnessDataArray[0].steps;
+    int index = 0;
+
+    for (int i = 1; i < totalRecords; i++) {
+        if (fitnessDataArray[i].steps > maxSteps) {
+            maxSteps = fitnessDataArray[i].steps;
+            index = i;
+        }
+    }
+
+    printf("Largest steps: %s %s\n", fitnessDataArray[index].date, fitnessDataArray[index].time);
+}
+
+void findMeanStepCount() {
+    if (totalRecords == 0) {
+        printf("Mean step count: 0\n");
+        return;
+    }
+
+    int sum = 0;
+
+    for (int i = 0; i < totalRecords; i++) {
+        sum += fitnessDataArray[i].steps;
+    }
+
+    int mean = (int)((float)sum / totalRecords + 0.5); //calculate mean and round to nearest integer
+    printf("Mean step count: %d\n", mean);
+}
+
+void findLongestPeriodAbove500() {
+    int start = -1;
+    int end = -1;
+    int currentStart = -1;
+
+    for (int i = 0; i < totalRecords; i++) {
+        if (fitnessDataArray[i].steps > 500) {
+            if (currentStart == -1) {
+                currentStart = i;
+            }
+        } else {
+            if (currentStart != -1) {
+                if (i - currentStart > end - start) {
+                    start = currentStart;
+                    end = i;
+                }
+                currentStart = -1;
+            }
+        }
+    }
+
+    if (currentStart != -1 && totalRecords - currentStart > end - start) {
+        start = currentStart;
+        end = totalRecords;
+    }
+
+    printf("Longest period start: %s %s\n", fitnessDataArray[start].date, fitnessDataArray[start].time);
+    printf("Longest period end: %s %s\n", fitnessDataArray[end - 1].date, fitnessDataArray[end - 1].time);
+}
+
+void printMenu() {
+    printf("\nMenu Options:\n");
     printf("A: Specify the filename to be imported\n");
     printf("B: Display the total number of records in the file\n");
     printf("C: Find the date and time of the timeslot with the fewest steps\n");
@@ -68,131 +213,4 @@ int menu() {
     printf("E: Find the mean step count of all the records in the file\n");
     printf("F: Find the longest continuous period where the step count is above 500 steps\n");
     printf("Q: Quit\n");
-    printf("Enter choice: \n");
-
-    // get the next character typed in and store in the 'choice'
-        choice = getchar();
-
-        // this gets rid of the newline character which the user will enter
-        // as otherwise this will stay in the stdin and be read next time
-        while (getchar() != '\n');
-
-
-        // switch statement to control the menu.
-        switch (choice)
-        {
-        
-        // this allows for either capital or lower case
-        case 'A':
-        case 'a':
-            printf("Input filename: \n");
-            scanf ("%s", userfilename); //takes a users input
-            char filename [] = userfilename; //open file
-            FILE *file = fopen(filename, "r");
-                if (file == NULL) {
-                    perror("");
-                    printf("Error: Could not find or open the file.\n");
-                    break;
-            printf("File successfully loaded.\n");
-            break;
-
-        case 'B':
-        case 'b':
-            count = 0;
-            while (fgets(line_buffer, buffer_size, file) != NULL) { //iterate through file one line at a time
-                if (count < 500) {
-                    count = count + 1;
-                }
-            }
-            printf("Total records: %d\n", count);
-            break;
-
-        case 'C':
-        case 'c':
-            while (fgets(line_buffer, buffer_size, file) != NULL) { //iterate through file one line at a time
-                if (count < 500) {
-                    char date[11], time[6], steps[20]; //temporary variables
-                    tokeniseRecord(line_buffer, ",", date, time, steps);
-                    fdata.steps = atoi(steps);
-                    strcpy(fdata.date, date);
-                    strcpy(fdata.time,time);
-                    records[count] = fdata;
-                    count = count + 1;
-
-                    smallest = 0;
-                    for (int i = 1; i < count && i < 500; i++) {
-                      if (records[i].steps < records[smallest].steps) {
-                        smallest = i;
-                      }
-                    }
-                }
-            }
-            printf("The fewest steps were completed on Date: %s at Time slot: %s\n", records[smallest].date, records[smallest].time);
-            break;
-
-        case 'D':
-        case 'd':
-            while (fgets(line_buffer, buffer_size, file) != NULL) { //iterate through file one line at a time
-                if (count < 500) {
-                    char date[11], time[6], steps[20]; //temporary variables
-                    tokeniseRecord(line_buffer, ",", date, time, steps);
-                    fdata.steps = atoi(steps);
-                    strcpy(fdata.date, date);
-                    strcpy(fdata.time,time);
-                    records[count] = fdata;
-                    count = count + 1;
-
-                    highest = 0;
-                    for (int i = 1; i < count && i < 500; i++) {
-                      if (records[i].steps > records[highest].steps) {
-                        highest = i;
-                      }
-                    }
-                }
-            }
-            printf("The highest number of steps was completed on Date: %s at Time slot: %s\n", records[highest].date, records[highest].time);
-            break;
-
-
-        case 'E':
-        case 'e':
-            while (fgets(line_buffer, buffer_size, file) != NULL) { //iterate through file one line at a time
-                if (count < 500) {
-                    char date[11], time[6], steps[20]; //temporary variables
-                    tokeniseRecord(line_buffer, ",", date, time, steps);
-                    fdata.steps = atoi(steps);
-                    strcpy(fdata.date, date);
-                    strcpy(fdata.time,time);
-                    records[count] = fdata;
-                    count = count + 1;
-
-                    for (int i = 1; i < count && i < 500; i++) {
-                        totalsteps = totalsteps + records[i].steps;
-                        numrecords = numrecords + 1;
-                      }
-                    }
-                }
-            
-            mean = totalsteps / numrecords;
-            printf("The mean number of steps is: %d\n", mean );
-            break;
-
-        
-        case 'F': //im stuck on this one
-        case 'f':
-            break;
-
-        case 'Q':
-        case 'q':
-            break;
-
-    fclose(file); //always remember to close the file again!
-    }
-  
 }
-// Complete the main function
-int main() {
-    menu();
-    return 0;
-}
-
